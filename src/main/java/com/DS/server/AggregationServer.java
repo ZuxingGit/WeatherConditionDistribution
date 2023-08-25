@@ -14,13 +14,13 @@ public class AggregationServer {
 
         System.out.println("client connected!");
 
-        InputStreamReader in =new InputStreamReader(s.getInputStream());
-        BufferedReader bf =new BufferedReader(in);
-        
-        String str= bf.readLine();
-        System.out.println("client: "+str);
+        InputStreamReader in = new InputStreamReader(s.getInputStream());
+        BufferedReader bf = new BufferedReader(in);
 
-        PrintWriter pr =new PrintWriter(s.getOutputStream());
+        String str = bf.readLine();
+        System.out.println("client: " + str);
+
+        PrintWriter pr = new PrintWriter(s.getOutputStream());
         pr.println("hello client");
         pr.flush();
     }
