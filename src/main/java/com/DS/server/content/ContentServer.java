@@ -1,4 +1,4 @@
-package com.DS.server;
+package com.DS.server.content;
 
 public class ContentServer {
 }

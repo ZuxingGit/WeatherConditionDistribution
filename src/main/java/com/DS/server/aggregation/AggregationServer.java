@@ -1,4 +1,4 @@
-package com.DS.server;
+package com.DS.server.aggregation;
 
 import java.io.*;
 import java.net.ServerSocket;
