@@ -2,26 +2,54 @@ package com.DS.utils.fileScanner;
 
 // Creating a text File using FileWriter
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
 public class WriteFile {
+    static final String currentWorkDirectory = System.getProperty("user.dir");
+
+    private static final String C = "contentServer";
+    private static final String A = "aggregationServer";
+
     public static void main(String[] args) throws IOException {
-        System.out.println(System.getProperty("user.dir"));
-        // Accept a string
-        String str = "File Handling in Java using " +
-                " FileWriter and FileReader";
+        ReadFile readFile=new ReadFile();
+        String content = readFile.readFrom("", "source.txt", C);
+        writeTo("", "cache.txt", content, A);
+    }
 
-        // attach a file to FileWriter
-        FileWriter fw = new FileWriter("./src/main/java/com/DS/server/content/output.txt");
+    /**
+     * write content to an exact file
+     *
+     * @param path
+     * @param fileName
+     * @param content
+     * @param serverType
+     */
+    public static void writeTo(String path, String fileName, String content, String serverType) {
+        System.out.println(currentWorkDirectory);
+        StringBuilder filePath = new StringBuilder();
+        path = (path.isEmpty() || path == "" || path == null) ? "/src/main/java/com/DS/server" : path;
+        if (C.equals(serverType)) {
+            filePath.append(currentWorkDirectory).append(path).append("/content/").append(fileName);
+        } else if (A.equals(serverType)) {
+            filePath.append(currentWorkDirectory).append(path).append("/aggregation/").append(fileName);
+        } else {
+            System.err.println("Wrong Server type!");
+        }
 
-        // read character wise from string and write
-        // into FileWriter
-        for (int i = 0; i < str.length(); i++)
-            fw.write(str.charAt(i));
-
-        System.out.println("Writing successful");
-        //close the file
-        fw.close();
+        if (content.startsWith("{")) {
+            content = content.replace("\",", "");
+            content = content.replace("\"", "");
+            content = content.replace("{", "");
+            content = content.replace("}", "");
+        }
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toString()));
+            writer.write(content);
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

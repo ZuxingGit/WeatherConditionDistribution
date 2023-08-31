@@ -7,6 +7,8 @@ import java.io.IOException;
 
 public class ScanFile {
     public static void main(String[] args) throws IOException {
+        String currentWorkDirectory = System.getProperty("user.dir");
+        System.out.println(System.getProperty("user.dir"));
         // variable declaration
         int ch;
 
@@ -14,7 +16,7 @@ public class ScanFile {
         FileReader fr = null;
         StringBuilder sb = new StringBuilder();
         try {
-            fr = new FileReader("./src/main/java/com/DS/server/content/source.txt");
+            fr = new FileReader(currentWorkDirectory + "/src/main/java/com/DS/server/content/source.txt");
         } catch (FileNotFoundException fe) {
             System.out.println("File not found");
         }
@@ -27,12 +29,13 @@ public class ScanFile {
 
         // close the file
         fr.close();
-//====================================
+        
+        //====================================
         // Accept a string
         String str = sb.toString();
 
         // attach a file to FileWriter
-        FileWriter fw = new FileWriter("./src/main/java/com/DS/server/aggregation/cache.txt");
+        FileWriter fw = new FileWriter(currentWorkDirectory + "/src/main/java/com/DS/server/aggregation/cache.txt");
 
         // read character wise from string and write
         // into FileWriter

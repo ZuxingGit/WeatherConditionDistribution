@@ -1,10 +1,14 @@
 package com.DS.client;
 
+import com.DS.utils.clock.LamportClock;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
 public class GETClient {
+    LamportClock clock=new LamportClock();
+    
     public static void main(String[] args) throws IOException {
         Socket socket = null;
         InputStreamReader inputStreamReader = null;
