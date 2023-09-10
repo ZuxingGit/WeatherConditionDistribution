@@ -13,7 +13,7 @@ public class WriteFile {
     private static final String A = "aggregationServer";
 
     public static void main(String[] args) throws IOException {
-        ReadFile readFile=new ReadFile();
+        ReadFile readFile = new ReadFile();
         String content = readFile.readFrom("", "source.txt", C);
         writeTo("", "cache.txt", content, A);
     }

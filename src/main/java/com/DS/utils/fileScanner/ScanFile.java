@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class ScanFile {
+    // not used
     public static void main(String[] args) throws IOException {
         String currentWorkDirectory = System.getProperty("user.dir");
         System.out.println(System.getProperty("user.dir"));

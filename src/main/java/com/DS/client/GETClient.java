@@ -7,8 +7,8 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class GETClient {
-    LamportClock clock=new LamportClock();
-    
+    static LamportClock clock = new LamportClock(0L);
+
     public static void main(String[] args) throws IOException {
         Socket socket = null;
         InputStreamReader inputStreamReader = null;
@@ -18,6 +18,7 @@ public class GETClient {
 
         try {
             socket = new Socket("localhost", 4567);
+
             inputStreamReader = new InputStreamReader(socket.getInputStream());
             outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
 
@@ -29,10 +30,19 @@ public class GETClient {
                 String msgToSend = scanner.nextLine();
 
                 bufferedWriter.write(msgToSend);
+                bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()));
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
+                System.out.println(clock.getMaxInCurrentProcess());
 
-                System.out.println("Server: " + bufferedReader.readLine());
+                String msgFromServer = bufferedReader.readLine();
+                String clockFromServer = msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6);
+                msgFromServer = msgFromServer.substring(0, msgFromServer.indexOf("Clock:"));
+                System.out.println("Server: " + msgFromServer);
+                System.out.println("ClockFromServer: " + clockFromServer);
+
+                clock.getNextNumber(Long.valueOf(clockFromServer));
+                System.out.println("Client own clock:" + clock.getMaxInCurrentProcess());
 
                 if (msgToSend.equalsIgnoreCase("BYE"))
                     break;
