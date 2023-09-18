@@ -1,6 +1,8 @@
 package com.DS.server.content;
 
+import com.DS.utils.CreateMessage;
 import com.DS.utils.clock.LamportClock;
+import com.DS.utils.fileScanner.ReadFile;
 
 import java.io.*;
 import java.net.Socket;
@@ -13,7 +15,7 @@ public class ContentServer {
     public static void main(String[] args) {
         int port = 4567;
         if (args.length == 0) {
-            System.out.println("Command: java SimpleSocketServer <port>, default port: 4567");
+            System.out.println("Command: java ContentServer <port>, default port: 4567");
         } else {
             port = Integer.parseInt(args[0]);
         }
@@ -27,6 +29,7 @@ public class ContentServer {
         OutputStreamWriter outputStreamWriter = null;
         BufferedReader bufferedReader = null;
         BufferedWriter bufferedWriter = null;
+        CreateMessage createMessage = new CreateMessage();
 
         try {
             socket = new Socket("localhost", port);
@@ -39,7 +42,12 @@ public class ContentServer {
 
             Scanner scanner = new Scanner(System.in);
             while (true) {
-//                String msgToSend = scanner.nextLine();
+                String input = scanner.nextLine();
+                System.out.println(input);
+                if ("PUT".equalsIgnoreCase(input)){
+                    String msgToSend= createMessage.makeWholeMessage("PUT", null);
+                    System.out.println(msgToSend);
+                }
 //
 //                bufferedWriter.write(msgToSend);
 //                bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()));
@@ -52,7 +60,7 @@ public class ContentServer {
 //                    bufferedWriter.write(" ");
                     bufferedWriter.write("still alive!\n");
                     bufferedWriter.flush(); 
-                    System.out.println("--^v--♡--^v--Heartbeat Check");
+                    System.out.println("--^v--♡--^v--Heartbeat Check--^v--♡--^v--");
                     continue;
                 }
                 String clockFromServer = msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6);

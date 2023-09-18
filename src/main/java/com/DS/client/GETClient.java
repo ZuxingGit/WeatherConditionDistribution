@@ -45,7 +45,7 @@ public class GETClient {
                 
                 if ("GET".equalsIgnoreCase(input)) {
                     String msgToSend = createMessage.createHeader("GET", null);
-//                System.out.println(msgToSend);
+                    System.out.println(msgToSend);
 
 
                     bufferedWriter.write(msgToSend);
@@ -60,7 +60,7 @@ public class GETClient {
                         msgFromServer.append(line).append("\n");
                     }
                     System.out.println(msgFromServer);
-                    if (msgFromServer.toString().startsWith("404 Not Found")){
+                    if (msgFromServer.toString().contains("404 Not Found")){
                         System.err.println("Can't find anything on AS");
                         continue;
                     }

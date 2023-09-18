@@ -1,10 +1,10 @@
 package com.DS.utils.json;
 
-public class JSONHandler {
+public final class JSONHandler {
 
-    public String string2JSON(String string) {
+    public static String string2JSON(String string) {
         if (string.startsWith("{") || string.endsWith("}"))
-            System.err.println("Wrong parameter!");
+            System.err.println("Wrong string parameter!");
 
         // all values are surrounded by " ", not exact JSON to be honest
         String line;
@@ -25,7 +25,7 @@ public class JSONHandler {
         return sb.toString();
     }
 
-    public String JSON2String(String JSON) {
+    public static String JSON2String(String JSON) {
         if (!JSON.startsWith("{") || !JSON.endsWith("}"))
             System.err.println("Wrong parameter!");
 

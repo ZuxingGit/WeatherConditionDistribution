@@ -56,7 +56,7 @@ public class AggregationServer01 extends Thread {
     public static void main(String[] args) {
         int port = 4567;
         if (args.length == 0) {
-            System.out.println("Command: java SimpleSocketServer <port>, default port: 4567");
+            System.out.println("Command: java AggregationServer <port>, default port: 4567");
         } else {
             port = Integer.parseInt(args[0]);
         }

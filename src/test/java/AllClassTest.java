@@ -14,9 +14,8 @@ public class AllClassTest {
     @Test
     public void readFile2JSON_Test() {
         ReadFile readFile=new ReadFile();
-        JSONHandler handler=new JSONHandler();
         String origin = readFile.readFrom("", "source.txt", C);
-        String JSON = handler.string2JSON(origin);
+        String JSON = JSONHandler.string2JSON(origin);
         System.out.println(JSON);
         
         assertTrue(JSON.contains("{"));

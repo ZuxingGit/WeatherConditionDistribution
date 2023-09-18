@@ -19,6 +19,7 @@ public class ReadFile {
 
     /**
      * get content from an exact file
+     *
      * @param path
      * @param fileName
      * @param serverType (C)contentServer or (A)aggregationServer
@@ -51,13 +52,16 @@ public class ReadFile {
         // meanwhile transform context into JSON format
         try {
             String line;
-            while ((line = reader.readLine()) != null) {
+            int count = 0;
+            while ((line = reader.readLine()) != null && !(line.startsWith("id:") && count == 1)) {
                 sb.append(line).append("\n");
+                if (line.startsWith("id:"))
+                    count++;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println(sb.toString());
+//        System.out.println(sb.toString());
 
         return sb.toString();
     }
