@@ -5,6 +5,7 @@ import com.DS.utils.clock.LamportClock;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Timer;
 
 public class AggregationServer {
     static LamportClock clock = new LamportClock(0L);
@@ -29,11 +30,20 @@ public class AggregationServer {
                 bufferedReader = new BufferedReader(inputStreamReader);
                 bufferedWriter = new BufferedWriter(outputStreamWriter);
 
+                Timer timer = new Timer();
+                timer.schedule(new HeartbeatCheck(timer, socket), 5000, 5000);
+//only set timer when a CS connected and sent a PUT request
                 while (true) {
-                    String msgFromClient = bufferedReader.readLine();
-                    String clockFromClient = msgFromClient.substring(msgFromClient.indexOf("Clock:") + 6);
-                    msgFromClient = msgFromClient.substring(0, msgFromClient.indexOf("Clock:"));
-                    System.out.println("Client: " + msgFromClient);
+                    String msgReceived = bufferedReader.readLine();
+                    if (msgReceived != null && "still alive!".equals(msgReceived.trim())) {
+                        continue;
+                    }
+                    if (msgReceived==null){
+                        break;
+                    }
+                    String clockFromClient = msgReceived.substring(msgReceived.indexOf("Clock:") + 6);
+                    msgReceived = msgReceived.substring(0, msgReceived.indexOf("Clock:"));
+                    System.out.println("Client: " + msgReceived);
                     System.out.println("clockFromClient: " + clockFromClient);
                     System.out.println("Clock:" + clock.getNextNumber(Long.valueOf(clockFromClient)));
 
@@ -41,8 +51,9 @@ public class AggregationServer {
                     bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()));
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
+                    System.out.println("===========");
 
-                    if (msgFromClient.equalsIgnoreCase("BYE"))
+                    if (msgReceived.equalsIgnoreCase("BYE"))
                         break;
                 }
 
@@ -53,6 +64,8 @@ public class AggregationServer {
                 bufferedWriter.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                socket.close();
             }
         }
     }

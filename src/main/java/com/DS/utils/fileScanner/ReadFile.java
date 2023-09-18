@@ -14,7 +14,7 @@ public class ReadFile {
     private static final String A = "aggregationServer";
 
     public static void main(String[] args) {
-//        readFrom("", "source.txt", C);
+        readFrom("", "source.txt", C);
     }
 
     /**
@@ -23,8 +23,8 @@ public class ReadFile {
      * @param fileName
      * @param serverType (C)contentServer or (A)aggregationServer
      */
-    public String readFrom(String path, String fileName, String serverType) {
-        System.out.println(currentWorkDirectory);
+    public static String readFrom(String path, String fileName, String serverType) {
+//        System.out.println(currentWorkDirectory);
         StringBuilder filePath = new StringBuilder();
         path = (path.isEmpty() || path == "" || path == null) ? "/src/main/java/com/DS/server" : path;
         if (C.equals(serverType)) {
@@ -43,7 +43,8 @@ public class ReadFile {
         try {
             reader = new BufferedReader(new FileReader(filePath.toString()));
         } catch (FileNotFoundException fe) {
-            System.out.println("File not found");
+//            System.out.println("File not found");
+            return "404";
         }
 
         // read from BufferedReader till the end of file
@@ -56,7 +57,7 @@ public class ReadFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        System.out.println(sb.toString());
+        System.out.println(sb.toString());
 
         return sb.toString();
     }

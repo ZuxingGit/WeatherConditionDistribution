@@ -21,7 +21,7 @@ public class LamportClock {
         if (Objects.equals(eventID, maxInCurrentProcess)) {
             this.maxInCurrentProcess = eventID + 1;
         } else {
-            this.maxInCurrentProcess= Math.max(eventID, maxInCurrentProcess) + 1;
+            this.maxInCurrentProcess = Math.max(eventID, maxInCurrentProcess) + 1;
         }
         return maxInCurrentProcess;
     }

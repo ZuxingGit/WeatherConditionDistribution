@@ -20,7 +20,6 @@ public class WriteFile {
 
     /**
      * write content to an exact file
-     *
      * @param path
      * @param fileName
      * @param content
@@ -29,7 +28,7 @@ public class WriteFile {
     public static void writeTo(String path, String fileName, String content, String serverType) {
         System.out.println(currentWorkDirectory);
         StringBuilder filePath = new StringBuilder();
-        path = (path.isEmpty() || path == "" || path == null) ? "/src/main/java/com/DS/server" : path;
+        path = (path == null || path == "" || path.isEmpty()) ? "/src/main/java/com/DS/server" : path;
         if (C.equals(serverType)) {
             filePath.append(currentWorkDirectory).append(path).append("/content/").append(fileName);
         } else if (A.equals(serverType)) {
