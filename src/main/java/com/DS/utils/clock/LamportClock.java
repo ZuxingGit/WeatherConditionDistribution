@@ -9,6 +9,10 @@ public class LamportClock {
         this.maxInCurrentProcess = 0L;
     }
 
+    /**
+     *  
+     * @return the current clock in the process
+     */
     public Long getMaxInCurrentProcess() {
         return maxInCurrentProcess;
     }
@@ -17,6 +21,11 @@ public class LamportClock {
         this.maxInCurrentProcess = maxInCurrentProcess;
     }
 
+    /**
+     * 
+     * @param eventID
+     * @return the clock of next step
+     */
     public Long getNextNumber(Long eventID) {
         if (Objects.equals(eventID, maxInCurrentProcess)) {
             this.maxInCurrentProcess = eventID + 1;

@@ -30,27 +30,27 @@ public class GETClient {
         BufferedWriter bufferedWriter = null;
 
         try {
+            socket = new Socket("localhost", port);
+
+            inputStreamReader = new InputStreamReader(socket.getInputStream());
+            outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+
+            bufferedReader = new BufferedReader(inputStreamReader);
+            bufferedWriter = new BufferedWriter(outputStreamWriter);
+
             Scanner scanner = new Scanner(System.in);
             while (true) {
                 String input = scanner.nextLine();
-                System.out.println(input);
-
-                socket = new Socket("localhost", port); //TODO
-
-                inputStreamReader = new InputStreamReader(socket.getInputStream());
-                outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-
-                bufferedReader = new BufferedReader(inputStreamReader);
-                bufferedWriter = new BufferedWriter(outputStreamWriter);
+                System.out.println();
 
                 if ("GET".equalsIgnoreCase(input)) {
                     String msgToSend = CreateMessage.createHeader("GET", null);
 //                    System.out.println(msgToSend);
                     bufferedWriter.write(msgToSend);
-//                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()));
+                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
-                    System.out.println("Current clock: " + clock.getMaxInCurrentProcess());
+                    System.out.println("#Current clock: " + clock.getMaxInCurrentProcess()+ "\n");
 
                     StringBuilder msgFromServer = new StringBuilder();
                     String line = bufferedReader.readLine();
@@ -62,8 +62,11 @@ public class GETClient {
                     if (msgFromServer.toString().contains("404 Not Found")) {
                         System.err.println("Can't find anything on AS");
                     } else {
+                        Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
                         String json = msgFromServer.substring(msgFromServer.indexOf("{"), msgFromServer.indexOf("}") + 1);
                         System.out.println(JSONHandler.JSON2String(json));
+                        System.out.println("\n#ClockFromAS: " + clockFromServer);
+                        System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));
                     }
                 }
                 if (input.equalsIgnoreCase("BYE"))

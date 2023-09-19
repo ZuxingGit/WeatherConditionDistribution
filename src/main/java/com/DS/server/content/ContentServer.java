@@ -2,7 +2,6 @@ package com.DS.server.content;
 
 import com.DS.utils.CreateMessage;
 import com.DS.utils.clock.LamportClock;
-import com.DS.utils.fileScanner.ReadFile;
 
 import java.io.*;
 import java.net.Socket;
@@ -31,40 +30,48 @@ public class ContentServer {
         BufferedWriter bufferedWriter = null;
 
         try {
+            socket = new Socket("localhost", port);
+
+            inputStreamReader = new InputStreamReader(socket.getInputStream());
+            outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+
+            bufferedReader = new BufferedReader(inputStreamReader);
+            bufferedWriter = new BufferedWriter(outputStreamWriter);
+
             Scanner scanner = new Scanner(System.in);
             while (true) {
                 String input = scanner.nextLine();
-                System.out.println(input);
-                socket = new Socket("localhost", port);
+                System.out.println();
 
-                inputStreamReader = new InputStreamReader(socket.getInputStream());
-                outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-
-                bufferedReader = new BufferedReader(inputStreamReader);
-                bufferedWriter = new BufferedWriter(outputStreamWriter);
-                
+                StringBuilder msgFromServer = new StringBuilder();
                 if ("PUT".equalsIgnoreCase(input)) {
                     String msgToSend = CreateMessage.makeWholeMessage("PUT", null);
 //                    System.out.println(msgToSend);
                     bufferedWriter.write(msgToSend);
+                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
+                    System.out.println("#Current clock: " + clock.getMaxInCurrentProcess()+ "\n");
+
+                    String line = bufferedReader.readLine();
+                    while (line != null && !line.isEmpty()) {
+                        msgFromServer.append(line).append("\n");
+                        line = bufferedReader.readLine();
+                    }
+                    System.out.println(msgFromServer.substring(0, msgFromServer.indexOf("Clock:")));
+                    Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
+                    System.out.println("#ClockFromAS: " + clockFromServer);
+                    System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));
+                    msgFromServer.setLength(0);
                 }
 //
 //                bufferedWriter.write(msgToSend);
 //                bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()));
 //                bufferedWriter.newLine();
 //                bufferedWriter.flush();
-                System.out.println(clock.getMaxInCurrentProcess());
+                
 
-                StringBuilder msgFromServer = new StringBuilder();
-                String line = bufferedReader.readLine();
-                while (line != null && !line.isEmpty()) {
-                    msgFromServer.append(line).append("\n");
-                    line = bufferedReader.readLine();
-                }
-                System.out.println(msgFromServer);
-                msgFromServer.setLength(0);
+                
                 
                 /*if ("alive?".equals(msgFromServer)){
 //                    bufferedWriter.write(" ");

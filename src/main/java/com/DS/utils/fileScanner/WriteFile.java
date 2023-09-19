@@ -2,10 +2,7 @@ package com.DS.utils.fileScanner;
 
 // Creating a text File using FileWriter
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 public class WriteFile {
     static final String currentWorkDirectory = System.getProperty("user.dir");
@@ -16,7 +13,7 @@ public class WriteFile {
     public static void main(String[] args) throws IOException {
         ReadFile readFile = new ReadFile();
         String content = readFile.readFrom("", "source.txt", C);
-        writeTo("", "cache.txt", content, A);
+        writeTo("", "cache.txt", content, A, true);
     }
 
     /**
@@ -27,7 +24,7 @@ public class WriteFile {
      * @param content
      * @param serverType
      */
-    public static boolean writeTo(String path, String fileName, String content, String serverType) {
+    public static boolean writeTo(String path, String fileName, String content, String serverType, boolean append) {
 //        System.out.println(currentWorkDirectory);
         boolean exist = false;
         StringBuilder filePath = new StringBuilder();
@@ -50,8 +47,25 @@ public class WriteFile {
         try {
             File file = new File(filePath.toString());
             exist = file.exists();
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            writer.write(content);
+            BufferedWriter writer=null;
+            if (exist && append) {
+                BufferedReader reader = null;  
+                reader = new BufferedReader(new FileReader(file));
+                StringBuilder newContent = new StringBuilder();
+                newContent.append(content).append("\n");
+                String line;
+                int count=0;
+                while ((line = reader.readLine()) != null && !(line.startsWith("id:") && count == 19)) {
+                    newContent.append("\n").append(line);
+                    if (line.startsWith("id:"))
+                        count++;
+                }
+                writer = new BufferedWriter(new FileWriter(file));
+                writer.write(newContent.toString());
+            } else {
+                writer = new BufferedWriter(new FileWriter(file));
+                writer.write(content);
+            }
             writer.newLine();
             writer.close();
         } catch (IOException e) {

@@ -8,8 +8,8 @@ import com.DS.utils.fileScanner.WriteFile;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Stack;
 import java.util.Timer;
-import java.util.stream.Collectors;
 
 public class AggregationServer01 extends Thread {
     LamportClock clock = new LamportClock(0L);
@@ -80,6 +80,7 @@ public class AggregationServer01 extends Thread {
 class RequestHandler extends Thread {
     private Socket socket;
     private LamportClock clock;
+    private Stack<String> feed = new Stack<String>();
 
     RequestHandler(Socket socket, LamportClock clock) {
         this.socket = socket;
@@ -118,6 +119,8 @@ class RequestHandler extends Thread {
                     continue;
                 } else if ("GET".equalsIgnoreCase(msgReceived.substring(0, 3))) {
                     String fileName = msgReceived.substring(4, msgReceived.indexOf(" HTTP"));
+                    Long clockFromClient = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
+                    clock.getNextNumber(clockFromClient);
                     String content = ReadFile.readFrom("", fileName, "aggregationServer");
 //                    System.out.println("content: " + content);
                     String returnMsg;
@@ -127,9 +130,10 @@ class RequestHandler extends Thread {
                         returnMsg = CreateMessage.makeWholeMessage("Response", "200 OK");
                     }
                     bufferedWriter.write(returnMsg);
+                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
-                    continue;
+                    System.out.println("#Current clock:" + clock.getMaxInCurrentProcess() + "\n");
                 } else if ("PUT".equalsIgnoreCase(msgReceived.substring(0, 3))) {
                     //201 Created;200 Uploaded;204 No Content;500 Incorrect JSON
                     String returnMsg;
@@ -140,20 +144,38 @@ class RequestHandler extends Thread {
                         returnMsg = CreateMessage.createHeader("Response", "204");
                     } else {
                         String fileName = "cache.txt";
-                        if (WriteFile.writeTo("", fileName, msgReceived.substring(msgReceived.indexOf("{"), msgReceived.indexOf("}") + 1), "aggregationServer"))
+                        String backFile = "backup.txt";
+                        String content = msgReceived.substring(msgReceived.indexOf("{"), msgReceived.indexOf("}") + 1);
+
+                        if (WriteFile.writeTo("", fileName, content, "aggregationServer", true))
                             returnMsg = CreateMessage.createHeader("Response", "200 Updated");  //file exists, updated successfully
-                        else 
+                        else
                             returnMsg = CreateMessage.createHeader("Response", "201");  //file non-existent, created one successfully
+
+                        feed.push(content);
+                        while (feed.size() >= 21) {
+                            String oldContent = feed.get(0);
+                            WriteFile.writeTo("", backFile, oldContent, "aggregationServer", true);
+                            feed.remove(0);
+                        }
                     }
 
+                    Long clockFromCS = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
+                    clock.getNextNumber(clockFromCS);
                     bufferedWriter.write(returnMsg);
+                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
+                    System.out.println("#Current clock:" + clock.getMaxInCurrentProcess() + "\n");
                 } else {    // neither GET nor PUT request
                     String returnMsg = CreateMessage.createHeader("Response", "400");
+                    Long clockFromCS = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
+                    clock.getNextNumber(clockFromCS);
                     bufferedWriter.write(returnMsg);
+                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
+                    System.out.println("#Current clock:" + clock.getMaxInCurrentProcess() + "\n");
                 }
                 msgReceived.setLength(0);
                 
@@ -169,8 +191,9 @@ class RequestHandler extends Thread {
                 bufferedWriter.flush();
                 System.out.println("===========");
 
-                if (msgReceived.equalsIgnoreCase("BYE"))
-                    break;*/
+                */
+                if (msgReceived.toString().equalsIgnoreCase("BYE"))
+                    break;
             }
 
             socket.close();
