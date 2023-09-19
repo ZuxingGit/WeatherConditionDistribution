@@ -18,7 +18,7 @@ public class ReadFile {
     }
 
     /**
-     * get content from an exact file
+     * get content from a specific file
      *
      * @param path
      * @param fileName

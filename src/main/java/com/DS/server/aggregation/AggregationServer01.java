@@ -3,6 +3,7 @@ package com.DS.server.aggregation;
 import com.DS.utils.CreateMessage;
 import com.DS.utils.clock.LamportClock;
 import com.DS.utils.fileScanner.ReadFile;
+import com.DS.utils.fileScanner.WriteFile;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -66,11 +67,11 @@ public class AggregationServer01 extends Thread {
         server.startServer();
 
         // Automatically shutdown in 1 minute
-        try {
+        /*try {
             Thread.sleep(60000);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
         server.stopServer();
     }
@@ -91,7 +92,6 @@ class RequestHandler extends Thread {
         OutputStreamWriter outputStreamWriter = null;
         BufferedReader bufferedReader = null;
         BufferedWriter bufferedWriter = null;
-        CreateMessage createMessage = new CreateMessage();
 
         try {
             inputStreamReader = new InputStreamReader(socket.getInputStream());
@@ -105,32 +105,58 @@ class RequestHandler extends Thread {
             //only set timer when a CS connected && sent a PUT request
             while (true) {
                 StringBuilder msgReceived = new StringBuilder();
-//                msgReceived.append(bufferedReader.lines().collect(Collectors.joining(System.lineSeparator())));
-                String line= bufferedReader.readLine();
-                while (line != null&&!line.isEmpty()) {
+                String line = bufferedReader.readLine();
+                while (line != null && !line.isEmpty()) {
                     msgReceived.append(line).append("\n");
-                    line= bufferedReader.readLine();
+                    line = bufferedReader.readLine();
                 }
-//                System.out.println(msgReceived);
+                System.out.println(msgReceived);
 
                 if (msgReceived == null || msgReceived.toString().isEmpty()) {
                     break;
-                } else if ("still alive!".equals(msgReceived.toString().trim())) {
+                } else if ("still alive!".equals(msgReceived.toString().trim())) {//heartbeat response
                     continue;
-                } else if (msgReceived.substring(0, 3).equalsIgnoreCase("GET")) {
-                    ReadFile readFile = new ReadFile();
+                } else if ("GET".equalsIgnoreCase(msgReceived.substring(0, 3))) {
                     String fileName = msgReceived.substring(4, msgReceived.indexOf(" HTTP"));
-                    String content = readFile.readFrom("", fileName, "aggregationServer");
-                    System.out.println("content: " + content);
+                    String content = ReadFile.readFrom("", fileName, "aggregationServer");
+//                    System.out.println("content: " + content);
+                    String returnMsg;
                     if ("404".equals(content)) {
-                        String returnMsg = createMessage.makeWholeMessage("Response", "404");
-                        bufferedWriter.write(returnMsg);
-                        bufferedWriter.newLine();
-                        bufferedWriter.flush();
+                        returnMsg = CreateMessage.makeWholeMessage("Response", "404");
+                    } else {    //200 OK
+                        returnMsg = CreateMessage.makeWholeMessage("Response", "200 OK");
                     }
+                    bufferedWriter.write(returnMsg);
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
                     continue;
-                }
+                } else if ("PUT".equalsIgnoreCase(msgReceived.substring(0, 3))) {
+                    //201 Created;200 Uploaded;204 No Content;500 Incorrect JSON
+                    String returnMsg;
+                    if (!msgReceived.toString().contains("{") || !msgReceived.toString().contains("}")) {
+                        returnMsg = CreateMessage.createHeader("Response", "500");
+                    } else if (msgReceived.substring(msgReceived.indexOf("{"), msgReceived.indexOf("}") + 1).isEmpty() ||
+                            Integer.valueOf(msgReceived.substring(msgReceived.indexOf("Content-Length:") + 15, msgReceived.indexOf("{")).trim()) < 1) {
+                        returnMsg = CreateMessage.createHeader("Response", "204");
+                    } else {
+                        String fileName = "cache.txt";
+                        if (WriteFile.writeTo("", fileName, msgReceived.substring(msgReceived.indexOf("{"), msgReceived.indexOf("}") + 1), "aggregationServer"))
+                            returnMsg = CreateMessage.createHeader("Response", "200 Updated");  //file exists, updated successfully
+                        else 
+                            returnMsg = CreateMessage.createHeader("Response", "201");  //file non-existent, created one successfully
+                    }
 
+                    bufferedWriter.write(returnMsg);
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
+                } else {    // neither GET nor PUT request
+                    String returnMsg = CreateMessage.createHeader("Response", "400");
+                    bufferedWriter.write(returnMsg);
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
+                }
+                msgReceived.setLength(0);
+                
                /* String clockFromClient = msgReceived.substring(msgReceived.indexOf("Clock:") + 6);
                 msgReceived = msgReceived.substring(0, msgReceived.indexOf("Clock:"));
                 System.out.println("Client: " + msgReceived);

@@ -3,6 +3,7 @@ package com.DS.utils.fileScanner;
 // Creating a text File using FileWriter
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -20,13 +21,15 @@ public class WriteFile {
 
     /**
      * write content to an exact file
+     *
      * @param path
      * @param fileName
      * @param content
      * @param serverType
      */
-    public static void writeTo(String path, String fileName, String content, String serverType) {
-        System.out.println(currentWorkDirectory);
+    public static boolean writeTo(String path, String fileName, String content, String serverType) {
+//        System.out.println(currentWorkDirectory);
+        boolean exist = false;
         StringBuilder filePath = new StringBuilder();
         path = (path == null || path == "" || path.isEmpty()) ? "/src/main/java/com/DS/server" : path;
         if (C.equals(serverType)) {
@@ -42,13 +45,18 @@ public class WriteFile {
             content = content.replace("\"", "");
             content = content.replace("{", "");
             content = content.replace("}", "");
+            content = content.trim();
         }
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toString()));
+            File file = new File(filePath.toString());
+            exist = file.exists();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
             writer.write(content);
+            writer.newLine();
             writer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return exist;
     }
 }

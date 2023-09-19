@@ -11,7 +11,7 @@ import java.util.Timer;
 
 public class ContentServer {
     static LamportClock clock = new LamportClock(0L);
-    
+
     public static void main(String[] args) {
         int port = 4567;
         if (args.length == 0) {
@@ -22,31 +22,33 @@ public class ContentServer {
         System.out.println("Connect Aggregation-server on port: " + port);
         PUT(port);
     }
-    
+
     public static void PUT(int port) {
         Socket socket = null;
         InputStreamReader inputStreamReader = null;
         OutputStreamWriter outputStreamWriter = null;
         BufferedReader bufferedReader = null;
         BufferedWriter bufferedWriter = null;
-        CreateMessage createMessage = new CreateMessage();
 
         try {
-            socket = new Socket("localhost", port);
-
-            inputStreamReader = new InputStreamReader(socket.getInputStream());
-            outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-
-            bufferedReader = new BufferedReader(inputStreamReader);
-            bufferedWriter = new BufferedWriter(outputStreamWriter);
-
             Scanner scanner = new Scanner(System.in);
             while (true) {
                 String input = scanner.nextLine();
                 System.out.println(input);
-                if ("PUT".equalsIgnoreCase(input)){
-                    String msgToSend= createMessage.makeWholeMessage("PUT", null);
-                    System.out.println(msgToSend);
+                socket = new Socket("localhost", port);
+
+                inputStreamReader = new InputStreamReader(socket.getInputStream());
+                outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+
+                bufferedReader = new BufferedReader(inputStreamReader);
+                bufferedWriter = new BufferedWriter(outputStreamWriter);
+                
+                if ("PUT".equalsIgnoreCase(input)) {
+                    String msgToSend = CreateMessage.makeWholeMessage("PUT", null);
+//                    System.out.println(msgToSend);
+                    bufferedWriter.write(msgToSend);
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
                 }
 //
 //                bufferedWriter.write(msgToSend);
@@ -55,8 +57,16 @@ public class ContentServer {
 //                bufferedWriter.flush();
                 System.out.println(clock.getMaxInCurrentProcess());
 
-                String msgFromServer = bufferedReader.readLine();
-                if ("alive?".equals(msgFromServer)){
+                StringBuilder msgFromServer = new StringBuilder();
+                String line = bufferedReader.readLine();
+                while (line != null && !line.isEmpty()) {
+                    msgFromServer.append(line).append("\n");
+                    line = bufferedReader.readLine();
+                }
+                System.out.println(msgFromServer);
+                msgFromServer.setLength(0);
+                
+                /*if ("alive?".equals(msgFromServer)){
 //                    bufferedWriter.write(" ");
                     bufferedWriter.write("still alive!\n");
                     bufferedWriter.flush(); 
@@ -69,15 +79,16 @@ public class ContentServer {
                 System.out.println("ClockFromAggregationServer: " + clockFromServer);
 
                 clock.getNextNumber(Long.valueOf(clockFromServer));
-                System.out.println("Content Server clock:" + clock.getMaxInCurrentProcess());
+                System.out.println("Content Server clock:" + clock.getMaxInCurrentProcess());*/
 
-//                if (msgToSend.equalsIgnoreCase("BYE"))
-//                    break;
+                if (input.equalsIgnoreCase("BYE"))
+                    break;
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
+                System.out.println("Connection stopped!");
                 if (socket != null)
                     socket.close();
                 if (inputStreamReader != null)

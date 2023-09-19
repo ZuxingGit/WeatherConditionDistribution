@@ -2,6 +2,7 @@ package com.DS.client;
 
 import com.DS.utils.CreateMessage;
 import com.DS.utils.clock.LamportClock;
+import com.DS.utils.json.JSONHandler;
 
 import java.io.*;
 import java.net.Socket;
@@ -27,7 +28,6 @@ public class GETClient {
         OutputStreamWriter outputStreamWriter = null;
         BufferedReader bufferedReader = null;
         BufferedWriter bufferedWriter = null;
-        CreateMessage createMessage = new CreateMessage();
 
         try {
             Scanner scanner = new Scanner(System.in);
@@ -42,12 +42,10 @@ public class GETClient {
 
                 bufferedReader = new BufferedReader(inputStreamReader);
                 bufferedWriter = new BufferedWriter(outputStreamWriter);
-                
+
                 if ("GET".equalsIgnoreCase(input)) {
-                    String msgToSend = createMessage.createHeader("GET", null);
-                    System.out.println(msgToSend);
-
-
+                    String msgToSend = CreateMessage.createHeader("GET", null);
+//                    System.out.println(msgToSend);
                     bufferedWriter.write(msgToSend);
 //                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()));
                     bufferedWriter.newLine();
@@ -55,14 +53,17 @@ public class GETClient {
                     System.out.println("Current clock: " + clock.getMaxInCurrentProcess());
 
                     StringBuilder msgFromServer = new StringBuilder();
-                    String line;
-                    while ((line = bufferedReader.readLine()) != null && !line.isEmpty()) {
+                    String line = bufferedReader.readLine();
+                    while (line != null && !line.isEmpty()) {
                         msgFromServer.append(line).append("\n");
+                        line = bufferedReader.readLine();
                     }
-                    System.out.println(msgFromServer);
-                    if (msgFromServer.toString().contains("404 Not Found")){
+//                    System.out.println(msgFromServer);
+                    if (msgFromServer.toString().contains("404 Not Found")) {
                         System.err.println("Can't find anything on AS");
-                        continue;
+                    } else {
+                        String json = msgFromServer.substring(msgFromServer.indexOf("{"), msgFromServer.indexOf("}") + 1);
+                        System.out.println(JSONHandler.JSON2String(json));
                     }
                 }
                 if (input.equalsIgnoreCase("BYE"))
@@ -87,12 +88,13 @@ public class GETClient {
                         bufferedReader.close();
                         bufferedWriter.close();
                     }*/
-                
+
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
+                System.out.println("Connection stopped!");
                 if (socket != null)
                     socket.close();
                 if (inputStreamReader != null)
