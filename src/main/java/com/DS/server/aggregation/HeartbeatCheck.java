@@ -1,39 +1,52 @@
 package com.DS.server.aggregation;
 
+import com.DS.utils.clock.LamportClock;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class HeartbeatCheck extends TimerTask {
-    Socket socket = null;
-    Timer timer = null;
+public class HeartbeatCheck {
+    Socket socket;
+    Timer timer;
+    LamportClock clock;
+    public boolean hasStarted = false;
 
-    public HeartbeatCheck(Timer timer, Socket socket) {
-        this.timer = timer;
+    public HeartbeatCheck( Socket socket, LamportClock clock, Timer timer) {
         this.socket = socket;
+        this.clock = clock;
+        this.timer = timer;
     }
 
-    @Override
-    public void run() {
-        if (socket == null) {
-            timer.cancel();
-        }
-        try {
-//            InputStreamReader inputStreamReader2 = new InputStreamReader(socket.getInputStream());
-            OutputStreamWriter outputStreamWriter2 = new OutputStreamWriter(socket.getOutputStream());
+    public void launchTimer() {
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (socket == null) {
+                    timer.cancel();
+                }
+                try {
+                    //            InputStreamReader inputStreamReader2 = new InputStreamReader(socket.getInputStream());
+                    OutputStreamWriter outputStreamWriter2 = new OutputStreamWriter(socket.getOutputStream());
 
-//            BufferedReader bufferedReader2 = new BufferedReader(inputStreamReader2);
-            BufferedWriter bufferedWriter2 = new BufferedWriter(outputStreamWriter2);
+                    //            BufferedReader bufferedReader2 = new BufferedReader(inputStreamReader2);
+                    BufferedWriter bufferedWriter2 = new BufferedWriter(outputStreamWriter2);
 
-            String alive = "alive?\n";
-            bufferedWriter2.write(alive);
-            bufferedWriter2.flush();
-
-        } catch (IOException e) {
-//            throw new RuntimeException(e);
-            timer.cancel();
-        } 
+                    String alive = "alive?Clock:" + clock.getMaxInCurrentProcess() + "\n";
+                    bufferedWriter2.write(alive);
+                    bufferedWriter2.newLine();
+                    bufferedWriter2.flush();
+                    hasStarted = true;
+//                    System.out.println("Timer launched");
+                } catch (IOException e) {
+                    //            throw new RuntimeException(e);
+                    timer.cancel();
+                }
+            }
+        };
+        timer = new Timer();
+        timer.schedule(timerTask, 15000, 15000);
     }
 }
 

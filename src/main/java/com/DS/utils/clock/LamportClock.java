@@ -17,8 +17,12 @@ public class LamportClock {
         return maxInCurrentProcess;
     }
 
-    public void setMaxInCurrentProcess(Long maxInCurrentProcess) {
-        this.maxInCurrentProcess = maxInCurrentProcess;
+    /**
+     * synchronized to the maximum clock number, no +1
+     * @param eventID
+     */
+    public void setMaxInCurrentProcess(Long eventID) {
+        this.maxInCurrentProcess = Math.max(eventID, maxInCurrentProcess);
     }
 
     /**

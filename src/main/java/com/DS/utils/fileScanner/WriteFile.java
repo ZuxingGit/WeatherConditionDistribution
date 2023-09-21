@@ -1,6 +1,6 @@
 package com.DS.utils.fileScanner;
 
-// Creating a text File using FileWriter
+// Creating a text File using FileWriter, BufferedWriter
 
 import java.io.*;
 
@@ -52,7 +52,7 @@ public class WriteFile {
                 BufferedReader reader = null;  
                 reader = new BufferedReader(new FileReader(file));
                 StringBuilder newContent = new StringBuilder();
-                newContent.append(content).append("\n");
+                newContent.append(content.trim()).append("\n");
                 String line;
                 int count=0;
                 while ((line = reader.readLine()) != null && !(line.startsWith("id:") && count == 19)) {

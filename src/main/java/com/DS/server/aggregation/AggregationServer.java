@@ -31,7 +31,7 @@ public class AggregationServer {
                 bufferedWriter = new BufferedWriter(outputStreamWriter);
 
                 Timer timer = new Timer();
-                timer.schedule(new HeartbeatCheck(timer, socket), 5000, 5000);
+//                timer.schedule(new HeartbeatCheck(timer, socket), 5000, 5000);
 //only set timer when a CS connected and sent a PUT request
                 while (true) {
                     String msgReceived = bufferedReader.readLine();

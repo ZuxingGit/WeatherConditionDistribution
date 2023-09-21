@@ -1,6 +1,6 @@
 package com.DS.utils.fileScanner;
 
-// Reading data from a file using FileReader
+// Reading data from a file using FileReader, BufferdReader
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
