@@ -28,7 +28,11 @@ public class WriteFile {
 //        System.out.println(currentWorkDirectory);
         boolean exist = false;
         StringBuilder filePath = new StringBuilder();
-        path = (path == null || path == "" || path.isEmpty()) ? "/src/main/java/com/DS/server" : path;
+        if (currentWorkDirectory.endsWith("classes")) {
+            path = (path == null || path == "" || path.isEmpty()) ? "/com/DS/server" : path;
+        } else {
+            path = (path == null || path == "" || path.isEmpty()) ? "/src/main/java/com/DS/server" : path;
+        }
         if (C.equals(serverType)) {
             filePath.append(currentWorkDirectory).append(path).append("/content/").append(fileName);
         } else if (A.equals(serverType)) {

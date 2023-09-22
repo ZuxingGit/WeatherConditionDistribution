@@ -27,7 +27,11 @@ public class ReadFile {
     public static String readFrom(String path, String fileName, String serverType) {
 //        System.out.println(currentWorkDirectory);
         StringBuilder filePath = new StringBuilder();
-        path = (path.isEmpty() || path == "" || path == null) ? "/src/main/java/com/DS/server" : path;
+        if (currentWorkDirectory.endsWith("classes")) {
+            path = (path.isEmpty() || path == "" || path == null) ? "/com/DS/server" : path;
+        } else {
+            path = (path.isEmpty() || path == "" || path == null) ? "/src/main/java/com/DS/server" : path;
+        }
         if (C.equals(serverType)) {
             filePath.append(currentWorkDirectory).append(path).append("/content/").append(fileName);
         } else if (A.equals(serverType)) {

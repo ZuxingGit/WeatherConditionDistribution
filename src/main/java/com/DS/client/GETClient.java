@@ -68,30 +68,11 @@ public class GETClient {
                         System.out.println("\n#ClockFromAS: " + clockFromServer);
                         System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));
                     }
-                }
-                if (input.equalsIgnoreCase("BYE"))
+                    msgFromServer.setLength(0);
+                } else if ("PUT".equalsIgnoreCase(input)) {
+                    System.err.println("Clients can't PUT!");
+                }else if (input.equalsIgnoreCase("BYE"))
                     break;
-                    
-                    /*if ("alive?".equals(msgFromServer)) {
-                        msgFromServer = bufferedReader.readLine();
-                    }
-                    String clockFromServer = msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6);
-                    msgFromServer = msgFromServer.substring(0, msgFromServer.indexOf("Clock:"));
-                    System.out.println("Server: " + msgFromServer);
-                    System.out.println("ClockFromServer: " + clockFromServer);
-
-                    clock.getNextNumber(Long.valueOf(clockFromServer));
-                    System.out.println("Client own clock:" + clock.getMaxInCurrentProcess());
-                    System.out.println("============");
-                    if (msgToSend.equalsIgnoreCase("BYE")) {
-//                    break;
-                        socket.close();
-                        inputStreamReader.close();
-                        outputStreamWriter.close();
-                        bufferedReader.close();
-                        bufferedWriter.close();
-                    }*/
-
             }
         } catch (IOException e) {
             e.printStackTrace();

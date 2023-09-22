@@ -19,7 +19,7 @@ JDFLAGS     := -sourcepath $(SOURCE_DIR)        \
  SHELL       := /bin/bash
  
 .PHONY: all
-all: compile
+all: compile TXT_TARGS
 
 hello:
 	@echo $(all_javas)
@@ -44,23 +44,37 @@ $(all_javas):
 javadoc: $(all_javas)
 	$(JAVADOC) $(JDFLAGS) @$<
 
+SRC_DIR := ./src/main/java/com/DS/server/content
+DEST_DIR := ./classes/com/DS/server/content
+FILES := source.txt
+
+TXT_TARGS : $(DEST_DIR)/$(FILES)
+
+$(DEST_DIR)/%.txt: $(SRC_DIR)/%.txt
+	cp -f $< $@
+
 .PHONY: clean
 clean:
 	$(RM) $(OUTPUT_DIR)
 
-register:
-	cd $(OUTPUT_DIR);
-	rmiregistry 
+#register:
+#	cd $(OUTPUT_DIR);
+#	rmiregistry 
 
 #moveTo:
 #	cd $(OUTPUT_DIR);
 
-startServer:
-	cd $(OUTPUT_DIR);
-	java -classpath $(OUTPUT_DIR) -Djava.rmi.server.codebase=file:$(OUTPUT_DIR)/ A1.CalculatorServer &
+AggregationServer:
+	cd $(OUTPUT_DIR);\
+	java com.DS.server.aggregation.AggregationServer
 
-startClient:
-	cd $(OUTPUT_DIR);
-	java -classpath $(OUTPUT_DIR) A1.CalculatorClient
-
-
+ContentServer:
+	cd $(OUTPUT_DIR);\
+	java com.DS.server.content.ContentServer
+	
+GETClient:
+	cd $(OUTPUT_DIR);\
+	java com.DS.client.GETClient
+	
+where:
+	echo `pwd`

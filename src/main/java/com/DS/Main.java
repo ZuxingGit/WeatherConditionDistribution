@@ -1,45 +1,42 @@
 package com.DS;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import com.DS.server.aggregation.FeedComparator;
+
+import java.util.Arrays;
+import java.util.PriorityQueue;
 
 public class Main {
-    private static Timer timer;
+        public static void main(String args[])
+        {
+            // Creating an empty PriorityQueue
+            PriorityQueue<String> queue = new PriorityQueue<String>(new FeedComparator());
 
-    public static void main(String[] args) throws InterruptedException {
-        Main main = new Main();
-        main.launchSomeTimer("john doe");
+            // Use add() method to add elements into the Queue
+            queue.add("a"+"Clock:2");
+            queue.add("a"+"Clock:5");
+            queue.add("a"+"Clock:3");
+            queue.add("a"+"Clock:9");
+            queue.add("a"+"Clock:1");
 
-        Thread.sleep(5000);
-        main.resetSomeTimer();
+            // Displaying the PriorityQueue
+            System.out.println("Initial PriorityQueue: " + queue);
 
-        Thread.sleep(10000);
-//        timer.cancel();
-        
-    }
+            // Fetching the element at the head of the queue
+            System.out.println("The element at the head of the"
+                    + " queue is: " + queue.peek());
 
-    private void launchSomeTimer(String name) {
-        TimerTask timerTask = new TimerTask() {
+            // Displaying the Queue after the Operation
+            System.out.println("Final PriorityQueue: " + queue);
 
-            @Override
-            public void run() {
-                System.out.println("name: " + name);
+            String[] entries = queue.toArray(new String[queue.size()]);
+            Arrays.sort(entries, new FeedComparator());
+            for(int i = entries.length - 1; i >= 0; i--){
+                String entry = entries[i];
+                System.out.println(entry);
             }
-        };
-        timer = new Timer();
-        timer.schedule(timerTask, 5000, 5000);
-    }
-
-    public void resetSomeTimer() {
-        TimerTask timerTask = new TimerTask() {
-
-            @Override
-            public void run() {
-                System.out.println("updating timer");
+            
+            while(!queue.isEmpty()){
+                System.out.println(queue.poll());
             }
-        };
-        timer.cancel();
-        timer = new Timer();
-        timer.schedule(timerTask, 5000, 5000);
-    }
+        }
 }

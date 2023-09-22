@@ -2,6 +2,7 @@ package com.DS.server.content;
 
 import com.DS.utils.CreateMessage;
 import com.DS.utils.clock.LamportClock;
+import com.DS.utils.fileScanner.ReadFile;
 
 import java.io.*;
 import java.net.Socket;
@@ -27,7 +28,7 @@ public class ContentServer {
         Socket socket = new Socket("localhost", port);
         ContentServer CS = new ContentServer(socket);
         CS.readMessage();
-        CS.PUT(port);
+        CS.PUT();
     }
 
     public ContentServer(Socket socket) {
@@ -43,12 +44,9 @@ public class ContentServer {
         }
     }
 
-    public void PUT(int port) {
+    public void PUT() {
         try {
-//            inputStreamReader = new InputStreamReader(socket.getInputStream());
             outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-
-//            bufferedReader = new BufferedReader(inputStreamReader);
             bufferedWriter = new BufferedWriter(outputStreamWriter);
 
             Scanner scanner = new Scanner(System.in);
@@ -58,6 +56,11 @@ public class ContentServer {
                 System.out.println();
 
                 if ("PUT".equalsIgnoreCase(input)) {
+                    String content = ReadFile.readFrom("", "source.txt", "contentServer");
+                    if ("404".equals(content)) {
+                        System.err.println("No source of weather information for now");
+                        continue;
+                    }
                     String msgToSend = CreateMessage.makeWholeMessage("PUT", null);
                     //                    System.out.println(msgToSend);
                     bufferedWriter.write(msgToSend);
@@ -65,46 +68,11 @@ public class ContentServer {
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
                     System.out.println("#Current clock: " + clock.getMaxInCurrentProcess() + "\n");
-
-                    /*String line = bufferedReader.readLine();
-                    while (line != null && !line.isEmpty()) {
-                        msgFromServer.append(line).append("\n");
-                        line = bufferedReader.readLine();
-                    }
-                    System.out.println(msgFromServer.substring(0, msgFromServer.indexOf("Clock:")));
-                    Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
-                    System.out.println("#ClockFromAS: " + clockFromServer);
-                    System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));*/
-                }
-
-
-//
-//                bufferedWriter.write(msgToSend);
-//                bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()));
-//                bufferedWriter.newLine();
-//                bufferedWriter.flush();
-                
-
-                
-                
-                /*if ("alive?".equals(msgFromServer)){
-//                    bufferedWriter.write(" ");
-                    bufferedWriter.write("still alive!\n");
-                    bufferedWriter.flush(); 
-                    System.out.println("--^v--♡--^v--Heartbeat Check--^v--♡--^v--");
-                    continue;
-                }
-                String clockFromServer = msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6);
-                msgFromServer = msgFromServer.substring(0, msgFromServer.indexOf("Clock:"));
-                System.out.println("AggregationServer: " + msgFromServer);
-                System.out.println("ClockFromAggregationServer: " + clockFromServer);
-
-                clock.getNextNumber(Long.valueOf(clockFromServer));
-                System.out.println("Content Server clock:" + clock.getMaxInCurrentProcess());*/
-
-                msgFromServer.setLength(0);
-                if (input.equalsIgnoreCase("BYE"))
+                } else if ("GET".equalsIgnoreCase(input)) {
+                    System.err.println("CS can't send GET request!");
+                } else if (input.equalsIgnoreCase("BYE"))
                     break;
+                msgFromServer.setLength(0);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -161,9 +129,6 @@ public class ContentServer {
                         msgFromServer.setLength(0);
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    System.out.println("Connection stopped!");
                     closeAll(socket, bufferedReader, bufferedWriter);
                 }
             }
