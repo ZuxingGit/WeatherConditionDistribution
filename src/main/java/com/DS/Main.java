@@ -1,11 +1,45 @@
 package com.DS;
 
-public class Main {
-    public static void main(String[] args) {
+import java.util.Timer;
+import java.util.TimerTask;
 
-        System.out.println(args.length);
-        String s="Content-Length: 23 \n{";
-//        System.exit(1);
-        System.out.println(s.substring(s.indexOf("Content-Length:")+15, s.indexOf("{")).trim());
+public class Main {
+    private static Timer timer;
+
+    public static void main(String[] args) throws InterruptedException {
+        Main main = new Main();
+        main.launchSomeTimer("john doe");
+
+        Thread.sleep(5000);
+        main.resetSomeTimer();
+
+        Thread.sleep(10000);
+//        timer.cancel();
+        
+    }
+
+    private void launchSomeTimer(String name) {
+        TimerTask timerTask = new TimerTask() {
+
+            @Override
+            public void run() {
+                System.out.println("name: " + name);
+            }
+        };
+        timer = new Timer();
+        timer.schedule(timerTask, 5000, 5000);
+    }
+
+    public void resetSomeTimer() {
+        TimerTask timerTask = new TimerTask() {
+
+            @Override
+            public void run() {
+                System.out.println("updating timer");
+            }
+        };
+        timer.cancel();
+        timer = new Timer();
+        timer.schedule(timerTask, 5000, 5000);
     }
 }
