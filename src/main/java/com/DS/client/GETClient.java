@@ -50,7 +50,7 @@ public class GETClient {
                     bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
-                    System.out.println("#Current clock: " + clock.getMaxInCurrentProcess()+ "\n");
+                    System.out.println("#Current clock: " + clock.getMaxInCurrentProcess() + "\n");
 
                     StringBuilder msgFromServer = new StringBuilder();
                     String line = bufferedReader.readLine();
@@ -58,20 +58,20 @@ public class GETClient {
                         msgFromServer.append(line).append("\n");
                         line = bufferedReader.readLine();
                     }
-//                    System.out.println(msgFromServer);
+//                    System.out.println("msgFromServer:" + msgFromServer);//delete
+                    Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
                     if (msgFromServer.toString().contains("404 Not Found")) {
                         System.err.println("Can't find anything on AS");
                     } else {
-                        Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
                         String json = msgFromServer.substring(msgFromServer.indexOf("{"), msgFromServer.indexOf("}") + 1);
                         System.out.println(JSONHandler.JSON2String(json));
-                        System.out.println("\n#ClockFromAS: " + clockFromServer);
-                        System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));
                     }
+                    System.out.println("\n#ClockFromAS: " + clockFromServer);
+                    System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));
                     msgFromServer.setLength(0);
                 } else if ("PUT".equalsIgnoreCase(input)) {
                     System.err.println("Clients can't PUT!");
-                }else if (input.equalsIgnoreCase("BYE"))
+                } else if (input.equalsIgnoreCase("BYE"))
                     break;
             }
         } catch (IOException e) {

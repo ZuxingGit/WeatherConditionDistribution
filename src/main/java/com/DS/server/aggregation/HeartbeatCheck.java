@@ -13,10 +13,9 @@ public class HeartbeatCheck {
     LamportClock clock;
     public boolean hasStarted = false;
 
-    public HeartbeatCheck( Socket socket, LamportClock clock, Timer timer) {
+    public HeartbeatCheck( Socket socket, LamportClock clock) {
         this.socket = socket;
         this.clock = clock;
-        this.timer = timer;
     }
 
     public void launchTimer() {

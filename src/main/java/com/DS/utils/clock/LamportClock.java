@@ -10,7 +10,6 @@ public class LamportClock {
     }
 
     /**
-     *  
      * @return the current clock in the process
      */
     public Long getMaxInCurrentProcess() {
@@ -19,14 +18,19 @@ public class LamportClock {
 
     /**
      * synchronized to the maximum clock number, no +1
+     *
      * @param eventID
      */
     public void setMaxInCurrentProcess(Long eventID) {
-        this.maxInCurrentProcess = Math.max(eventID, maxInCurrentProcess);
+        if (eventID > maxInCurrentProcess) {
+            this.maxInCurrentProcess = Math.max(eventID, maxInCurrentProcess);
+            System.out.println("#Current clock synchronized to " + maxInCurrentProcess);
+        } else {
+            System.out.println("#Current clock didn't change: " + maxInCurrentProcess);
+        }
     }
 
     /**
-     * 
      * @param eventID
      * @return the clock of next step
      */

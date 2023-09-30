@@ -11,15 +11,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.PriorityQueue;
-import java.util.Timer;
 
 public class AggregationServer extends Thread {
     LamportClock clock = new LamportClock(0L);
     private ServerSocket serverSocket;
     private int port;
     private boolean running = false;
-    public boolean hasStarted = false; //whether timer hasStarted
-    private Timer timer = new Timer();
+    PriorityQueue<String> feed = new PriorityQueue<>(20, new FeedComparator());
 
 
     public AggregationServer(int port) {
@@ -51,7 +49,7 @@ public class AggregationServer extends Thread {
                 Socket socket = serverSocket.accept();
 
                 // Pass the socket to the RequestHandler thread for processing
-                RequestHandler requestHandler = new RequestHandler(socket, clock, hasStarted, timer);
+                RequestHandler requestHandler = new RequestHandler(socket, clock, feed);
                 requestHandler.start();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -79,14 +77,13 @@ class RequestHandler extends Thread {
     private Socket socket;
     private LamportClock clock;
     private boolean hasStarted = false;
-    private Timer timer;
-    private PriorityQueue<String> feed = new PriorityQueue<>(20, new FeedComparator()); //20 newest entries
+    private PriorityQueue<String> feed; //20 newest entries
+    private PriorityQueue<String> subFeed = new PriorityQueue<>(20, new FeedComparator()); //at most 20 newest entries
 
-    RequestHandler(Socket socket, LamportClock clock, boolean hasStarted, Timer timer) {
+    RequestHandler(Socket socket, LamportClock clock, PriorityQueue<String> feed) {
         this.socket = socket;
         this.clock = clock;
-        this.hasStarted = hasStarted;
-        this.timer = timer;
+        this.feed = feed;
     }
 
     @Override
@@ -103,6 +100,9 @@ class RequestHandler extends Thread {
             bufferedReader = new BufferedReader(inputStreamReader);
             bufferedWriter = new BufferedWriter(outputStreamWriter);
 
+            int count = 0; //store heartbeat no response times
+            String fileName = "cache.txt";
+            String backupFile = "backup.txt";
             while (true) {
                 StringBuilder msgReceived = new StringBuilder();
                 String line = bufferedReader.readLine();
@@ -112,19 +112,39 @@ class RequestHandler extends Thread {
                 }
                 System.out.println("\n" + msgReceived);
 
-                if (msgReceived == null || msgReceived.toString().isEmpty()) {
-                    break;
+                if (msgReceived == null || msgReceived.toString().isEmpty()) {//heartbeat no response
+                    count++;
+                    if (count >= 2) {   //no response for heartbeat check 2 times= 15s*2= 30s
+                        System.out.println("heartbeat no response x" + count);
+                        for (String entry : subFeed
+                        ) {
+                            feed.remove(entry);
+                        }
+                        String[] entries = feed.toArray(new String[feed.size()]);
+                        Arrays.sort(entries, new FeedComparator());
+                        String contentInFeed = "";
+                        for (int i = entries.length - 1; i >= 0; i--) {
+                            String entry = entries[i];
+                            contentInFeed += JSONHandler.JSON2String(entry.substring(entry.indexOf("{"), entry.indexOf("}") + 1)) + "\n\n";
+                        }
+                        WriteFile.writeTo("", fileName, contentInFeed, "aggregationServer", false);
+                        break;
+                    } else {
+                        System.out.println("heartbeat no response x" + count);
+                        continue;
+                    }
                 } else if ("still alive!".equals(msgReceived.toString().trim())) {//heartbeat response
                     continue;
                 } else if ("GET".equalsIgnoreCase(msgReceived.substring(0, 3))) {
-                    String fileName = msgReceived.substring(4, msgReceived.indexOf(" HTTP"));
+                    String cacheFile = msgReceived.substring(4, msgReceived.indexOf(" HTTP"));
                     Long clockFromClient = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
                     clock.getNextNumber(clockFromClient);
                     String returnMsg;
                     String content;
+                    System.out.println("feed.size()=" + feed.size());//delete
 //                    if (feed.size() == 0) {
-                    content = ReadFile.readFrom("", fileName, "aggregationServer");
-                    if ("404".equals(content)) {
+                    content = ReadFile.readFrom("", cacheFile, "aggregationServer");
+                    if ("404".equals(content) || content.equals("\n")) {
                         returnMsg = CreateMessage.makeWholeMessage("Response", "404");
                     } else {    //200 OK
                         returnMsg = CreateMessage.makeWholeMessage("Response", "200 OK");
@@ -142,12 +162,12 @@ class RequestHandler extends Thread {
                     System.out.println("#Current clock:" + clock.getMaxInCurrentProcess() + "\n");
                 } else if ("PUT".equalsIgnoreCase(msgReceived.substring(0, 3))) {
                     //only set timer when a CS connected && sent a PUT request
-                    HeartbeatCheck heartbeatCheck = new HeartbeatCheck(socket, clock, timer);
+                    HeartbeatCheck heartbeatCheck = new HeartbeatCheck(socket, clock);
                     if (!hasStarted) {
                         heartbeatCheck.launchTimer();
                         hasStarted = true;
                     }
-                    //500 Incorrect JSON;204 No Content;201 Created;200 Updated;
+                    //500 Incorrect JSON; 204 No Content; 201 Created; 200 Updated;
                     String returnMsg;
                     if (!msgReceived.toString().contains("{") || !msgReceived.toString().contains("}") || !msgReceived.toString().contains("\"id\":")) {
                         returnMsg = CreateMessage.createHeader("Response", "500");
@@ -155,8 +175,6 @@ class RequestHandler extends Thread {
                             Integer.valueOf(msgReceived.substring(msgReceived.indexOf("Content-Length:") + 15, msgReceived.indexOf("{")).trim()) < 1) {
                         returnMsg = CreateMessage.createHeader("Response", "204");
                     } else {
-                        String fileName = "cache.txt";
-                        String backFile = "backup.txt";
                         String content = msgReceived.substring(msgReceived.indexOf("{"), msgReceived.indexOf("}") + 1);
 
                         if (WriteFile.writeTo("", fileName, content, "aggregationServer", true))
@@ -165,10 +183,17 @@ class RequestHandler extends Thread {
                             returnMsg = CreateMessage.createHeader("Response", "201");  //file non-existent, created one successfully
 
                         feed.add(msgReceived.toString());
+                        subFeed.add(msgReceived.toString());
+                        System.out.println("feed.size()=" + feed.size());//delete
                         while (feed.size() >= 21) {
                             String oldContent = feed.peek();
-                            WriteFile.writeTo("", backFile, oldContent, "aggregationServer", true);
+                            WriteFile.writeTo("", backupFile, oldContent, "aggregationServer", true);
                             feed.poll();
+                            for (String entry : subFeed
+                            ) {
+                                if (!feed.contains(entry))
+                                    subFeed.remove(entry);
+                            }
                         }
 
                         String[] entries = feed.toArray(new String[feed.size()]);
@@ -176,7 +201,7 @@ class RequestHandler extends Thread {
                         String contentInFeed = "";
                         for (int i = entries.length - 1; i >= 0; i--) {
                             String entry = entries[i];
-                            contentInFeed += JSONHandler.JSON2String(entry.substring(entry.indexOf("{"), msgReceived.indexOf("}") + 1)) + "\n\n";
+                            contentInFeed += JSONHandler.JSON2String(entry.substring(entry.indexOf("{"), entry.indexOf("}") + 1)) + "\n\n";
                         }
                         WriteFile.writeTo("", fileName, contentInFeed, "aggregationServer", false);
                     }
@@ -190,8 +215,8 @@ class RequestHandler extends Thread {
                     System.out.println("#Current clock:" + clock.getMaxInCurrentProcess() + "\n");
                 } else {    // neither GET nor PUT request
                     String returnMsg = CreateMessage.createHeader("Response", "400");
-                    Long clockFromCS = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
-                    clock.getNextNumber(clockFromCS);
+                    Long clockReceived = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
+                    clock.getNextNumber(clockReceived);
                     bufferedWriter.write(returnMsg);
                     bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
                     bufferedWriter.newLine();

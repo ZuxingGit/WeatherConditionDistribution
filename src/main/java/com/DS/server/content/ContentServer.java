@@ -119,8 +119,8 @@ public class ContentServer {
                             Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
                             System.out.println("#ClockFromAS: " + clockFromServer);
                             clock.setMaxInCurrentProcess(clockFromServer);
-                            System.out.println("#Current clock synchronized to " + clock.getMaxInCurrentProcess());
                         } else {
+                            System.out.println("msgFrom-server:" + msgFromServer);//delete
                             System.out.println("----msgFromAggregationServer----\n" + msgFromServer.substring(0, msgFromServer.indexOf("Clock:")));
                             Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
                             System.out.println("#ClockFromAS: " + clockFromServer);

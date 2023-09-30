@@ -52,7 +52,7 @@ public class CreateMessage {
             if ("404".equals(status)) { //No content from AS
                 body.append("{").append("\n")
                         .append("\"message\": \"Can't find anything on AS\"").append("\n")
-                        .append("}").append("\n");
+                        .append("}");
             }
             if ("200 OK".equals(status)) {
                 String content = ReadFile.readFrom("", "cache.txt", "aggregationServer");
