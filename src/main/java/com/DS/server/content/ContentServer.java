@@ -18,14 +18,19 @@ public class ContentServer {
     private BufferedWriter bufferedWriter = null;
 
     public static void main(String[] args) throws IOException {
+        String address = "localhost:4567";
+        String IP = "localhost";
         int port = 4567;
         if (args.length == 0) {
-            System.out.println("Command: java ContentServer <port>, default port: 4567");
+            System.out.println("Command: make \"ContentServer <IP>:<port>\", default address: localhost:4567");
         } else {
-            port = Integer.parseInt(args[0]);
+            address = args[0];
+            IP = address.substring(0, address.indexOf(":"));
+            port = Integer.parseInt(address.substring(address.indexOf(":") + 1));
+            System.out.println("Command: make \"ContentServer <IP>:<port>\", given address: " + IP + ":" + port);
         }
-        System.out.println("Connect Aggregation-server on port: " + port);
-        Socket socket = new Socket("localhost", port);
+        System.out.println("Connecting Aggregation-server on: " + address);
+        Socket socket = new Socket(IP, port);
         ContentServer CS = new ContentServer(socket);
         CS.readMessage();
         CS.PUT();
@@ -47,7 +52,6 @@ public class ContentServer {
     public void PUT() {
         try {
             Scanner scanner = new Scanner(System.in);
-            StringBuilder msgFromServer = new StringBuilder();
             while (true) {
                 String input = scanner.nextLine();
                 System.out.println();
@@ -69,7 +73,6 @@ public class ContentServer {
                     System.err.println("CS can't send GET request!");
                 } else if (input.equalsIgnoreCase("BYE"))
                     break;
-                msgFromServer.setLength(0);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -90,6 +93,7 @@ public class ContentServer {
                         msgFromServer.append(line).append("\n");
                         line = bufferedReader.readLine();
                     }
+                    
                     if (msgFromServer == null || msgFromServer.toString().isEmpty()) {
                         System.out.println("AS disconnected");
                         break;
@@ -104,7 +108,7 @@ public class ContentServer {
                         System.out.println("#ClockFromAS: " + clockFromServer);
                         clock.setMaxInCurrentProcess(clockFromServer);
                     } else {
-                        System.out.println("msgFrom-server:" + msgFromServer);//delete
+//                        System.out.println("msgFrom-server:" + msgFromServer);//delete
                         System.out.println("----msgFromAggregationServer----\n" + msgFromServer.substring(0, msgFromServer.indexOf("Clock:")));
                         Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
                         System.out.println("#ClockFromAS: " + clockFromServer);

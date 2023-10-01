@@ -7,8 +7,10 @@ import com.DS.utils.fileScanner.WriteFile;
 import com.DS.utils.json.JSONHandler;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.PriorityQueue;
 
@@ -27,6 +29,17 @@ public class AggregationServer extends Thread {
     public void startServer() {
         try {
             serverSocket = new ServerSocket(port);
+            URL whatismyip = null;
+            try {
+                whatismyip = new URL("http://checkip.amazonaws.com");
+                BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+                String ip = in.readLine(); //you get the IP as a String
+                System.out.println("Public IP address: " + ip + ":" + port);
+            } catch (IOException e) {
+                System.err.println("trying get Public IP Address failed");
+            }
+
+            System.out.println("Private IP address: " + InetAddress.getLocalHost().getHostAddress() + ":" + port);
             this.start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -43,7 +56,7 @@ public class AggregationServer extends Thread {
         running = true;
         while (running) {
             try {
-                System.out.println("Listening for a connection");
+                System.out.println("Listening for a connection...");
 
                 // Call accept() to receive the next connection
                 Socket socket = serverSocket.accept();
@@ -60,12 +73,13 @@ public class AggregationServer extends Thread {
     public static void main(String[] args) {
         int port = 4567;
         if (args.length == 0) {
-            System.out.println("Command: java AggregationServer <port>, default port: 4567");
+            System.out.println("Command: make \"AggregationServer <port>\", default port: 4567");
         } else {
             port = Integer.parseInt(args[0]);
+            System.out.println("Command: make \"AggregationServer <port>\", given port: " + port);
         }
         System.out.println("Start server on port: " + port);
-
+        System.out.println("Connect to AS through one of these two Addresses:");
         AggregationServer server = new AggregationServer(port);
         server.startServer();
 
@@ -110,7 +124,6 @@ class RequestHandler extends Thread {
                     msgReceived.append(line).append("\n");
                     line = bufferedReader.readLine();
                 }
-                System.out.println("\n" + msgReceived);
 
                 if (msgReceived == null || msgReceived.toString().isEmpty()) {//heartbeat no response= disconnected
                     System.out.println("a CS not connected anymore. Clearing its old entries.");
@@ -129,7 +142,7 @@ class RequestHandler extends Thread {
                     break;
                 } else if ("still alive!".equals(msgReceived.toString().trim())) {//heartbeat response
                     count++;
-                    if (count >= 2) {//no response for heartbeat check 2 times= 15s*2= 30s
+                    if (count == 2) {//no response for heartbeat check 2 times= 15s*2= 30s
                         System.out.println("a CS has not communicated within the last 30s. Clearing its old entries.");
                         for (String entry : subFeed
                         ) {
@@ -148,6 +161,7 @@ class RequestHandler extends Thread {
                     } else
                         continue;
                 } else if ("GET".equalsIgnoreCase(msgReceived.substring(0, 3))) {
+                    System.out.println("\n" + msgReceived);
                     String cacheFile = msgReceived.substring(4, msgReceived.indexOf(" HTTP"));
                     Long clockFromClient = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
                     clock.getNextNumber(clockFromClient);
@@ -173,6 +187,7 @@ class RequestHandler extends Thread {
                     bufferedWriter.flush();
                     System.out.println("#Current clock:" + clock.getMaxInCurrentProcess() + "\n");
                 } else if ("PUT".equalsIgnoreCase(msgReceived.substring(0, 3))) {
+                    System.out.println("\n" + msgReceived);
                     //only set timer when a CS connected && sent a PUT request
                     HeartbeatCheck heartbeatCheck = new HeartbeatCheck(socket, clock);
                     if (!hasStarted) {

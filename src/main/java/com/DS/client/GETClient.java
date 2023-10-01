@@ -31,14 +31,19 @@ public class GETClient {
     }
 
     public static void main(String[] args) throws IOException {
+        String address = "localhost:4567";
+        String IP = "localhost";
         int port = 4567;
         if (args.length == 0) {
-            System.out.println("Command: java GETClient <port>, default port: 4567");
+            System.out.println("Command: make \"GETClient <IP>:<port>\", default address: localhost:4567");
         } else {
-            port = Integer.parseInt(args[0]);
+            address = args[0];
+            IP = address.substring(0, address.indexOf(":"));
+            port = Integer.parseInt(address.substring(address.indexOf(":") + 1));
+            System.out.println("Command: make \"GETClient <IP>:<port>\", given address:  " + IP + ":" + port);
         }
-        System.out.println("Connect Aggregation-server on port: " + port);
-        Socket socket = new Socket("localhost", port);
+        System.out.println("Connecting Aggregation-server on port: " + address);
+        Socket socket = new Socket(IP, port);
         GETClient client = new GETClient(socket);
         client.readMessage();
         client.GET();
@@ -91,15 +96,15 @@ public class GETClient {
     // method to read messages using thread
     public void readMessage() {
         new Thread(() -> {
+            StringBuilder msgFromServer = new StringBuilder();
             try {
                 while (socket.isConnected()) {
-                    StringBuilder msgFromServer = new StringBuilder();
                     String line = bufferedReader.readLine();
                     while (line != null && !line.isEmpty()) {
                         msgFromServer.append(line).append("\n");
                         line = bufferedReader.readLine();
                     }
-                    //                    System.out.println("msgFromServer:" + msgFromServer);//delete
+                    // System.out.println("msgFromServer:" + msgFromServer);//delete
                     if (msgFromServer == null || msgFromServer.toString().isEmpty()) {
                         System.out.println("AS disconnected");
                         break;

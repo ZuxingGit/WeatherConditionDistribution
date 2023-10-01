@@ -57,17 +57,17 @@ $(DEST_DIR)/%.txt: $(SRC_DIR)/%.txt
 clean:
 	$(RM) $(OUTPUT_DIR)
 
-AggregationServer:
-	cd $(OUTPUT_DIR);\
-	java com.DS.server.aggregation.AggregationServer
+AggregationServer%:
+	@cd $(OUTPUT_DIR);\
+	java com.DS.server.aggregation.AggregationServer $*
 
-ContentServer:
-	cd $(OUTPUT_DIR);\
-	java com.DS.server.content.ContentServer
+ContentServer%:
+	@cd $(OUTPUT_DIR);\
+	java com.DS.server.content.ContentServer $*
 	
-GETClient:
-	cd $(OUTPUT_DIR);\
-	java com.DS.client.GETClient
+GETClient%:
+	@cd $(OUTPUT_DIR);\
+	java com.DS.client.GETClient $(address) $*
 	
 where:
 	echo `pwd`
