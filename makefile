@@ -57,13 +57,6 @@ $(DEST_DIR)/%.txt: $(SRC_DIR)/%.txt
 clean:
 	$(RM) $(OUTPUT_DIR)
 
-#register:
-#	cd $(OUTPUT_DIR);
-#	rmiregistry 
-
-#moveTo:
-#	cd $(OUTPUT_DIR);
-
 AggregationServer:
 	cd $(OUTPUT_DIR);\
 	java com.DS.server.aggregation.AggregationServer

@@ -56,7 +56,7 @@ public class CreateMessage {
             }
             if ("200 OK".equals(status)) {
                 String content = ReadFile.readFrom("", "cache.txt", "aggregationServer");
-                content=JSONHandler.string2JSON(content);
+                content = JSONHandler.string2JSON(content);
                 body.append(content);
             }
         } else if ("PUT".equals(type)) {

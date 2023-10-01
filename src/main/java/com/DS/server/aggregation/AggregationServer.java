@@ -112,14 +112,30 @@ class RequestHandler extends Thread {
                 }
                 System.out.println("\n" + msgReceived);
 
-                if (msgReceived == null || msgReceived.toString().isEmpty()) {//heartbeat no response
+                if (msgReceived == null || msgReceived.toString().isEmpty()) {//heartbeat no response= disconnected
+                    System.out.println("a CS not connected anymore. Clearing its old entries.");
+                    for (String entry : subFeed
+                    ) {
+                        feed.remove(entry);
+                    }
+                    String[] entries = feed.toArray(new String[feed.size()]);
+                    Arrays.sort(entries, new FeedComparator());
+                    String contentInFeed = "";
+                    for (int i = entries.length - 1; i >= 0; i--) {
+                        String entry = entries[i];
+                        contentInFeed += JSONHandler.JSON2String(entry.substring(entry.indexOf("{"), entry.indexOf("}") + 1)) + "\n\n";
+                    }
+                    WriteFile.writeTo("", fileName, contentInFeed, "aggregationServer", false);
+                    break;
+                } else if ("still alive!".equals(msgReceived.toString().trim())) {//heartbeat response
                     count++;
-                    if (count >= 2) {   //no response for heartbeat check 2 times= 15s*2= 30s
-                        System.out.println("heartbeat no response x" + count);
+                    if (count >= 2) {//no response for heartbeat check 2 times= 15s*2= 30s
+                        System.out.println("a CS has not communicated within the last 30s. Clearing its old entries.");
                         for (String entry : subFeed
                         ) {
                             feed.remove(entry);
                         }
+                        subFeed.clear();
                         String[] entries = feed.toArray(new String[feed.size()]);
                         Arrays.sort(entries, new FeedComparator());
                         String contentInFeed = "";
@@ -128,13 +144,9 @@ class RequestHandler extends Thread {
                             contentInFeed += JSONHandler.JSON2String(entry.substring(entry.indexOf("{"), entry.indexOf("}") + 1)) + "\n\n";
                         }
                         WriteFile.writeTo("", fileName, contentInFeed, "aggregationServer", false);
-                        break;
-                    } else {
-                        System.out.println("heartbeat no response x" + count);
                         continue;
-                    }
-                } else if ("still alive!".equals(msgReceived.toString().trim())) {//heartbeat response
-                    continue;
+                    } else
+                        continue;
                 } else if ("GET".equalsIgnoreCase(msgReceived.substring(0, 3))) {
                     String cacheFile = msgReceived.substring(4, msgReceived.indexOf(" HTTP"));
                     Long clockFromClient = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
@@ -166,6 +178,9 @@ class RequestHandler extends Thread {
                     if (!hasStarted) {
                         heartbeatCheck.launchTimer();
                         hasStarted = true;
+                    } else {
+                        if (count == 1 || count == 2)
+                            count = 0;
                     }
                     //500 Incorrect JSON; 204 No Content; 201 Created; 200 Updated;
                     String returnMsg;

@@ -13,7 +13,7 @@ public class HeartbeatCheck {
     LamportClock clock;
     public boolean hasStarted = false;
 
-    public HeartbeatCheck( Socket socket, LamportClock clock) {
+    public HeartbeatCheck(Socket socket, LamportClock clock) {
         this.socket = socket;
         this.clock = clock;
     }

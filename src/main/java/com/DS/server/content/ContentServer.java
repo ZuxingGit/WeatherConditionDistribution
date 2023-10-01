@@ -40,15 +40,12 @@ public class ContentServer {
             this.bufferedReader = new BufferedReader(inputStreamReader);
             this.bufferedWriter = new BufferedWriter(outputStreamWriter);
         } catch (IOException e) {
-            closeAll(socket, bufferedReader, bufferedWriter);
+            closeAll(socket, bufferedReader, bufferedWriter, inputStreamReader, outputStreamWriter);
         }
     }
 
     public void PUT() {
         try {
-            outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-            bufferedWriter = new BufferedWriter(outputStreamWriter);
-
             Scanner scanner = new Scanner(System.in);
             StringBuilder msgFromServer = new StringBuilder();
             while (true) {
@@ -77,78 +74,68 @@ public class ContentServer {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            try {
-                System.out.println("Connection stopped!");
-                if (socket != null)
-                    socket.close();
-                if (inputStreamReader != null)
-                    inputStreamReader.close();
-                if (outputStreamWriter != null)
-                    outputStreamWriter.close();
-                if (bufferedReader != null)
-                    bufferedReader.close();
-                if (bufferedWriter != null)
-                    bufferedWriter.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            closeAll(socket, bufferedReader, bufferedWriter, inputStreamReader, outputStreamWriter);
         }
     }
 
     // method to read messages using thread
     public void readMessage() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                StringBuilder msgFromServer = new StringBuilder();
+        new Thread(() -> {
+            StringBuilder msgFromServer = new StringBuilder();
 
-                try {
-                    while (socket.isConnected()) {
-                        String line = bufferedReader.readLine();
-                        while (line != null && !line.isEmpty()) {
-                            msgFromServer.append(line).append("\n");
-                            line = bufferedReader.readLine();
-                        }
-                        if (msgFromServer.toString().startsWith("alive?")) {
-//                    bufferedWriter.write(" ");
-                            bufferedWriter.write("still alive!\n");
-                            bufferedWriter.newLine();
-                            bufferedWriter.flush();
-                            System.out.println();
-                            System.out.println("--------Heartbeat Check--------");
-                            Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
-                            System.out.println("#ClockFromAS: " + clockFromServer);
-                            clock.setMaxInCurrentProcess(clockFromServer);
-                        } else {
-                            System.out.println("msgFrom-server:" + msgFromServer);//delete
-                            System.out.println("----msgFromAggregationServer----\n" + msgFromServer.substring(0, msgFromServer.indexOf("Clock:")));
-                            Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
-                            System.out.println("#ClockFromAS: " + clockFromServer);
-                            System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));
-                        }
-                        msgFromServer.setLength(0);
+            try {
+                while (socket.isConnected()) {
+                    String line = bufferedReader.readLine();
+                    while (line != null && !line.isEmpty()) {
+                        msgFromServer.append(line).append("\n");
+                        line = bufferedReader.readLine();
                     }
-                } catch (IOException e) {
-                    closeAll(socket, bufferedReader, bufferedWriter);
+                    if (msgFromServer == null || msgFromServer.toString().isEmpty()) {
+                        System.out.println("AS disconnected");
+                        break;
+                    } else if (msgFromServer.toString().startsWith("alive?")) {
+//                    bufferedWriter.write(" ");
+                        bufferedWriter.write("still alive!\n");
+                        bufferedWriter.newLine();
+                        bufferedWriter.flush();
+                        System.out.println();
+                        System.out.println("--------Heartbeat Check--------");
+                        Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
+                        System.out.println("#ClockFromAS: " + clockFromServer);
+                        clock.setMaxInCurrentProcess(clockFromServer);
+                    } else {
+                        System.out.println("msgFrom-server:" + msgFromServer);//delete
+                        System.out.println("----msgFromAggregationServer----\n" + msgFromServer.substring(0, msgFromServer.indexOf("Clock:")));
+                        Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
+                        System.out.println("#ClockFromAS: " + clockFromServer);
+                        System.out.println("#Current clock: " + clock.getNextNumber(clockFromServer));
+                    }
+                    msgFromServer.setLength(0);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                System.out.println("Connection stopped!");
+                closeAll(socket, bufferedReader, bufferedWriter, inputStreamReader, outputStreamWriter);
             }
         }).start();
     }
 
-    public void closeAll(Socket socket, BufferedReader buffReader, BufferedWriter buffWriter) {
+    public void closeAll(Socket socket, BufferedReader buffReader, BufferedWriter buffWriter, InputStreamReader ir, OutputStreamWriter ow) {
         try {
-            if (buffReader != null) {
-                buffReader.close();
-            }
-            if (buffWriter != null) {
-                buffWriter.close();
-            }
-            if (socket != null) {
+            if (socket != null)
                 socket.close();
-            }
+            if (inputStreamReader != null)
+                inputStreamReader.close();
+            if (outputStreamWriter != null)
+                outputStreamWriter.close();
+            if (bufferedReader != null)
+                bufferedReader.close();
+            if (bufferedWriter != null)
+                bufferedWriter.close();
+            System.exit(0);
         } catch (IOException e) {
             e.getStackTrace();
         }
     }
-
 }
