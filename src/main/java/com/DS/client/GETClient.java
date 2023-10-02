@@ -40,7 +40,7 @@ public class GETClient {
             address = args[0];
             IP = address.substring(0, address.indexOf(":"));
             port = Integer.parseInt(address.substring(address.indexOf(":") + 1));
-            System.out.println("Command: make \"GETClient <IP>:<port>\", given address:  " + IP + ":" + port);
+//            System.out.println("Command: make \"GETClient <IP>:<port>\", given address:  " + IP + ":" + port);
         }
         System.out.println("Connecting Aggregation-server on port: " + address);
         Socket socket = new Socket(IP, port);
@@ -56,14 +56,25 @@ public class GETClient {
                 String input = scanner.nextLine();
                 System.out.println();
 
-                if ("GET".equalsIgnoreCase(input)) {
-                    String msgToSend = CreateMessage.createHeader("GET", null);
+                if (input.startsWith("get")){
+                    String msgToSend="";
+                    if ("GET".equalsIgnoreCase(input)) {
+                        msgToSend = CreateMessage.createHeader("GET", null);
 //                    System.out.println(msgToSend);
-                    bufferedWriter.write(msgToSend);
-                    bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
-                    bufferedWriter.newLine();
-                    bufferedWriter.flush();
-                    System.out.println("#Current clock: " + clock.getMaxInCurrentProcess() + "\n");
+                        bufferedWriter.write(msgToSend);
+                        bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
+                        bufferedWriter.newLine();
+                        bufferedWriter.flush();
+                        System.out.println("#Current clock: " + clock.getMaxInCurrentProcess() + "\n");
+                    } else {
+                        String stationID = input.substring(4).trim().toUpperCase();
+                        msgToSend = CreateMessage.makeWholeMessage("GET", null, stationID);
+                        bufferedWriter.write(msgToSend);
+                        bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
+                        bufferedWriter.newLine();
+                        bufferedWriter.flush();
+                        System.out.println("#Current clock: " + clock.getMaxInCurrentProcess() + "\n");
+                    }
                 } else if ("PUT".equalsIgnoreCase(input)) {
                     System.err.println("Clients can't PUT!");
                 } else if (input.equalsIgnoreCase("BYE"))
@@ -71,7 +82,7 @@ public class GETClient {
             }
         } catch (ConnectException e) {
             System.err.println("AS might be turned off. Connection failed!");
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
@@ -111,7 +122,7 @@ public class GETClient {
                     } else {
                         Long clockFromServer = Long.valueOf(msgFromServer.substring(msgFromServer.indexOf("Clock:") + 6).trim());
                         if (msgFromServer.toString().contains("404 Not Found")) {
-                            System.err.println("Can't find anything on AS");
+                            System.err.println("Can't find anything on AS or nothing is what you want");
                         } else {
                             String json = msgFromServer.substring(msgFromServer.indexOf("{"), msgFromServer.indexOf("}") + 1);
                             System.out.println(JSONHandler.JSON2String(json));

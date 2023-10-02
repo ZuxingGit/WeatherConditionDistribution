@@ -6,10 +6,10 @@ commands are lines starting with a '>'
 > make clean && make
 
 1. start an AggregationServer (u can stay in current directory where 'makefile' is)
-#for starting a default AS for local connnection:(There is a space before the 2nd quotation mark. Don't delete it)
+#for starting a default AS on port 4567:(There is a space before the 2nd quotation mark. Don't delete it)
 > make "AggregationServer "
 
-#for starting a specifc AS for remote connection:
+#for starting a specific AS on a specific port:
 > make "AggregationServer <port>"
 
 **WARNING before making connection:**

@@ -27,7 +27,7 @@ public class ContentServer {
             address = args[0];
             IP = address.substring(0, address.indexOf(":"));
             port = Integer.parseInt(address.substring(address.indexOf(":") + 1));
-            System.out.println("Command: make \"ContentServer <IP>:<port>\", given address: " + IP + ":" + port);
+//            System.out.println("Command: make \"ContentServer <IP>:<port>\", given address: " + IP + ":" + port);
         }
         System.out.println("Connecting Aggregation-server on: " + address);
         Socket socket = new Socket(IP, port);
@@ -62,7 +62,7 @@ public class ContentServer {
                         System.err.println("No source of weather information for now");
                         continue;
                     }
-                    String msgToSend = CreateMessage.makeWholeMessage("PUT", null);
+                    String msgToSend = CreateMessage.makeWholeMessage("PUT", null, null);
                     //                    System.out.println(msgToSend);
                     bufferedWriter.write(msgToSend);
                     bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");

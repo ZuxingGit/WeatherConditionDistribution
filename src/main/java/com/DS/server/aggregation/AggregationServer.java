@@ -39,7 +39,7 @@ public class AggregationServer extends Thread {
                 System.err.println("trying get Public IP Address failed");
             }
 
-            System.out.println("Private IP address: " + InetAddress.getLocalHost().getHostAddress() + ":" + port);
+            System.out.println("Private IP address: " + "localhost:" + port);
             this.start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,6 +117,7 @@ class RequestHandler extends Thread {
             int count = 0; //store heartbeat no response times
             String fileName = "cache.txt";
             String backupFile = "backup.txt";
+            String clientType = "";
             while (true) {
                 StringBuilder msgReceived = new StringBuilder();
                 String line = bufferedReader.readLine();
@@ -126,23 +127,25 @@ class RequestHandler extends Thread {
                 }
 
                 if (msgReceived == null || msgReceived.toString().isEmpty()) {//heartbeat no response= disconnected
-                    System.out.println("a CS not connected anymore. Clearing its old entries.");
-                    for (String entry : subFeed
-                    ) {
-                        feed.remove(entry);
+                    if (clientType == "CS") {
+                        System.out.println("a CS not connected anymore. Clearing its old entries.");
+                        for (String entry : subFeed
+                        ) {
+                            feed.remove(entry);
+                        }
+                        String[] entries = feed.toArray(new String[feed.size()]);
+                        Arrays.sort(entries, new FeedComparator());
+                        String contentInFeed = "";
+                        for (int i = entries.length - 1; i >= 0; i--) {
+                            String entry = entries[i];
+                            contentInFeed += JSONHandler.JSON2String(entry.substring(entry.indexOf("{"), entry.indexOf("}") + 1)) + "\n\n";
+                        }
+                        WriteFile.writeTo("", fileName, contentInFeed, "aggregationServer", false);
+                        break;
                     }
-                    String[] entries = feed.toArray(new String[feed.size()]);
-                    Arrays.sort(entries, new FeedComparator());
-                    String contentInFeed = "";
-                    for (int i = entries.length - 1; i >= 0; i--) {
-                        String entry = entries[i];
-                        contentInFeed += JSONHandler.JSON2String(entry.substring(entry.indexOf("{"), entry.indexOf("}") + 1)) + "\n\n";
-                    }
-                    WriteFile.writeTo("", fileName, contentInFeed, "aggregationServer", false);
-                    break;
                 } else if ("still alive!".equals(msgReceived.toString().trim())) {//heartbeat response
                     count++;
-                    if (count == 2) {//no response for heartbeat check 2 times= 15s*2= 30s
+                    if (count == 2 && clientType == "CS") {//no response for heartbeat check 2 times= 15s*2= 30s
                         System.out.println("a CS has not communicated within the last 30s. Clearing its old entries.");
                         for (String entry : subFeed
                         ) {
@@ -161,25 +164,32 @@ class RequestHandler extends Thread {
                     } else
                         continue;
                 } else if ("GET".equalsIgnoreCase(msgReceived.substring(0, 3))) {
+                    if (clientType.isEmpty())
+                        clientType = "client";
+
                     System.out.println("\n" + msgReceived);
                     String cacheFile = msgReceived.substring(4, msgReceived.indexOf(" HTTP"));
                     Long clockFromClient = Long.valueOf(msgReceived.substring(msgReceived.indexOf("Clock:") + 6).trim());
                     clock.getNextNumber(clockFromClient);
                     String returnMsg;
-                    String content;
+                    String content = "";
                     System.out.println("feed.size()=" + feed.size());//delete
-//                    if (feed.size() == 0) {
-                    content = ReadFile.readFrom("", cacheFile, "aggregationServer");
-                    if ("404".equals(content) || content.equals("\n")) {
-                        returnMsg = CreateMessage.makeWholeMessage("Response", "404");
-                    } else {    //200 OK
-                        returnMsg = CreateMessage.makeWholeMessage("Response", "200 OK");
+                    if (msgReceived.toString().contains("stationID")) {
+                        String stationID = msgReceived.substring(msgReceived.indexOf("stationID\":") + 11, msgReceived.indexOf("\n}")).replace("\"","").trim();
+                        content = ReadFile.readFrom("", cacheFile, "aggregationServer", stationID);
+                        if ("404".equals(content) || content.equals("\n") || content.isEmpty()) {
+                            returnMsg = CreateMessage.makeWholeMessage("Response", "404", null);
+                        } else {    //200 OK
+                            returnMsg = CreateMessage.makeWholeMessage("Response", "200 OK", stationID);
+                        }
+                    } else {
+                        content = ReadFile.readFrom("", cacheFile, "aggregationServer");
+                        if ("404".equals(content) || content.equals("\n") || content.isEmpty()) {
+                            returnMsg = CreateMessage.makeWholeMessage("Response", "404", null);
+                        } else {    //200 OK
+                            returnMsg = CreateMessage.makeWholeMessage("Response", "200 OK", null);
+                        }
                     }
-                   /* } else {
-                        String body = feed.peek();
-                        System.out.println(body);
-                        returnMsg = CreateMessage.createHeader("Response", "200 OK") + body.substring(body.indexOf("{"), msgReceived.indexOf("}") + 1);
-                    }*/
 
                     bufferedWriter.write(returnMsg);
                     bufferedWriter.write("Clock:" + clock.getNextNumber(clock.getMaxInCurrentProcess()) + "\n");
@@ -187,6 +197,9 @@ class RequestHandler extends Thread {
                     bufferedWriter.flush();
                     System.out.println("#Current clock:" + clock.getMaxInCurrentProcess() + "\n");
                 } else if ("PUT".equalsIgnoreCase(msgReceived.substring(0, 3))) {
+                    if (clientType.isEmpty())
+                        clientType = "CS";
+
                     System.out.println("\n" + msgReceived);
                     //only set timer when a CS connected && sent a PUT request
                     HeartbeatCheck heartbeatCheck = new HeartbeatCheck(socket, clock);

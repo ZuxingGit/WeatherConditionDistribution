@@ -45,46 +45,62 @@ public class CreateMessage {
         return header.toString();
     }
 
-    public static String createBody(String type, String status) {
+    public static String createBody(String type, String status, String param0) {
         StringBuilder body = new StringBuilder();
 
+        String content = "";
         if ("Response".equals(type)) {
             if ("404".equals(status)) { //No content from AS
                 body.append("{").append("\n")
-                        .append("\"message\": \"Can't find anything on AS\"").append("\n")
+                        .append("\"message\": \"find nothing on AS\"").append("\n")
                         .append("}");
             }
             if ("200 OK".equals(status)) {
-                String content = ReadFile.readFrom("", "cache.txt", "aggregationServer");
-                content = JSONHandler.string2JSON(content);
-                body.append(content);
+                if (param0!=null){
+                    content = ReadFile.readFrom("", "cache.txt", "aggregationServer", param0);
+                    content = JSONHandler.string2JSON(content);
+                    body.append(content);
+                } else {
+                    content = ReadFile.readFrom("", "cache.txt", "aggregationServer");
+                    content = JSONHandler.string2JSON(content);
+                    body.append(content);
+                }
             }
         } else if ("PUT".equals(type)) {
-            String content = ReadFile.readFrom("", "source.txt", "contentServer");
+            content = ReadFile.readFrom("", "source.txt", "contentServer");
             content = JSONHandler.string2JSON(content);
+            body.append(content);
+        } else if ("GET".equals(type)) {
+            content = JSONHandler.string2JSON("stationID:" + param0 + "\n");
             body.append(content);
         }
 
         return body.toString();
     }
 
-    public static String makeWholeMessage(String type, String status) {
+    public static String makeWholeMessage(String type, String status, String param0) {
         if ("PUT".equals(type)) {
             StringBuilder msg = new StringBuilder();
             String header = createHeader(type, status);
-            String body = createBody(type, status);
+            String body = createBody(type, status, param0);
             return msg.append(header)
                     .append("Content-Length: ").append(body.length()).append("\n")
                     .append(body).append("\n").toString();
-        } 
-        if ("Response".equals(type)) {
+        } else if ("GET".equals(type)) {
             StringBuilder msg = new StringBuilder();
             String header = createHeader(type, status);
-            String body = createBody(type, status);
+            String body = createBody(type, status, param0);
+            return msg.append(header)
+                    .append("Content-Length: ").append(body.length()).append("\n")
+                    .append(body).append("\n").toString();
+        } else if ("Response".equals(type)) {
+            StringBuilder msg = new StringBuilder();
+            String header = createHeader(type, status);
+            String body = createBody(type, status, param0);
             return msg.append(header)
                     .append("Content-Length: ").append(body.length()).append("\n")
                     .append(body).append("\n").toString();
         }
-        return createHeader(type, status) + createBody(type, status);
+        return createHeader(type, status) + createBody(type, status, null);
     }
 }
