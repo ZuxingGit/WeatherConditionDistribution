@@ -33,8 +33,11 @@ Instead, use Private IP for local connection.
 4. u can type "put" in ContentServer window, then it will read local file, generate a PUT message and send it to AggregationServer
 > put
 
-5. u can type "get" in GETClient window, then it will generate a GET message, send it to AggregationServer and parse received message from AggregationServer. It could be a correct weather info or error code
+5. u can type "get" in GETClient window, then it will generate a GET message, send it to AggregationServer and parse received message from AggregationServer. The response could be a correct weather info or error code.
 > get
+#No stationID. It will get the newest entry from AS.
+> get <stationID>
+#With stationID. It will get the newest entry of the specific weather station from AS
 
 6. Now, u can type "put" or "get" in their own windows in any order u want.
  you can see output details in server's window or clients' windows.
