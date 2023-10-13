@@ -1,6 +1,4 @@
 # Location of trees.
-#SOURCE_DIR := /Users/wzx/Development/DistributedSystems/src/A1
-#OUTPUT_DIR := /Users/wzx/Development/RMI/assignment1
 SOURCE_DIR := .
 OUTPUT_DIR := ./classes
 # Java tools

@@ -5,8 +5,8 @@ commands are lines starting with a '>'
 0. if AutoCompile doesn't work as expected, execute make again
 > make clean && make
 
-1. start an AggregationServer (u can stay in current directory where 'makefile' is)
-#for starting a default AS on port 4567:(There is a space before the 2nd quotation mark. Don't delete it)
+1. start an AggregationServer (u can stay in current directory where makefile is)
+#for starting a default AS on port 4567, run the command below:(There is a space before the 2nd quotation mark. Don't delete it)
 > make "AggregationServer "
 
 #for starting a specific AS on a specific port:
